@@ -1,22 +1,34 @@
 package models
 
-// Room represents room with name and email
-type Room struct{
-	Name string
+import (
+	"encoding/xml"
+)
+
+// Room represents room.
+type Room struct {
+	Name         string
 	EmailAddress string
 }
-type ExchangeRoom struct {
-	ID struct {
-		Name string `xml:"Name"`
-		EmailAddress string `xml:"EmailAddress"`
-	} `xml:"Id"`
+
+// RoomList represents roomlist.
+type RoomList struct {
+	Name         string `xml:",Name"`
+	EmailAddress string `xml:",EmailAddress"`
 }
 
-func (e ExchangeRoom)ToRoom()Room {
-	return Room{Name:e.ID.Name,EmailAddress:e.ID.EmailAddress}
-}
-type CalendarEvent struct {
-	StartTime string
-	EndTime   string
-	BusyType  string
+// UnmarshalXML unmarshals xml from exchange to Room.
+func (r *Room) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	type ExchangeRoom struct {
+		ID struct {
+			Name         string `xml:"Name"`
+			EmailAddress string `xml:"EmailAddress"`
+		} `xml:"Id"`
+	}
+	exroom := ExchangeRoom{}
+	err := d.DecodeElement(&exroom, &start)
+	if err != nil {
+		return err
+	}
+	*r = Room{Name: exroom.ID.Name, EmailAddress: exroom.ID.EmailAddress}
+	return nil
 }
