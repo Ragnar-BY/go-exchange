@@ -111,3 +111,20 @@ func parseRoomAvailability(soap string) ([]models.CalendarEventArray, error) {
 	}
 	return events, nil
 }
+
+// GetFreeRoomsByTime return all rooms, that are available since start to end time.
+func (e Exchange2006) GetFreeRoomsByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.Room, error) {
+	roomAv, err := e.GetRoomsAvailabilityByTime(rooms, start, end)
+	if err != nil {
+		return nil, err
+	}
+	newRooms := make([]models.Room, 0)
+	for _, r := range roomAv {
+		if r.CalendarEvents != nil {
+			if len(r.CalendarEvents.CalendarEvent) == 0 {
+				newRooms = append(newRooms, r)
+			}
+		}
+	}
+	return newRooms, nil
+}
