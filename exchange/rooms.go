@@ -4,13 +4,116 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"text/template"
+	"html/template"
 	"time"
 
 	"github.com/Ragnar-BY/go-exchange/models"
 )
 
-// GetRoomsAvailabilityByTime  for array of rooms return array of events array, which consists of moments, when room is busy
+// GetRooms return rooms from roomlist as email.
+func (e Exchange2006) GetRooms(roomlist string) ([]models.Room, error) {
+	t, err := template.New("rooms").Parse(getRoomsRequest())
+	if err != nil {
+		return nil, fmt.Errorf("[GetRooms] cannot parse template %v", err)
+	}
+	var buf bytes.Buffer
+	t.Execute(&buf, roomlist)
+	content, err := e.Post(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("[GetRooms] cannot post %v", err)
+	}
+	return parseRooms(content)
+}
+
+func getRoomsRequest() string {
+	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
+xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
+xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Header>
+	<t:RequestServerVersion Version="Exchange2010" />
+	</soap:Header>
+	<soap:Body>
+	<m:GetRooms>
+	<m:RoomList>
+	<t:EmailAddress>{{.}}</t:EmailAddress>
+	</m:RoomList>
+	</m:GetRooms>
+	</soap:Body>
+	</soap:Envelope>`
+}
+
+func parseRooms(soap string) ([]models.Room, error) {
+	decoder := xml.NewDecoder(bytes.NewBufferString(soap))
+	var rooms = make([]models.Room, 0)
+	for {
+		// Read tokens from the XML document in a stream.
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		switch se := t.(type) {
+		case xml.StartElement:
+			if se.Name.Local == "Room" {
+				var room models.Room
+				err := decoder.DecodeElement(&room, &se)
+				if err != nil {
+					return nil, err
+				}
+				rooms = append(rooms, room)
+			}
+		}
+	}
+	return rooms, nil
+}
+
+// GetRoomLists make request to exchange and return roomlists.
+func (e Exchange2006) GetRoomLists() ([]models.RoomList, error) {
+	content, err := e.Post([]byte(roomListRequest()))
+	if err != nil {
+		return nil, fmt.Errorf("[GetRoomLists] cannot post: %v", err)
+	}
+	return parseRoomLists(content)
+}
+
+func roomListRequest() string {
+	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2010" />
+  </soap:Header>
+  <soap:Body>
+    <m:GetRoomLists />
+  </soap:Body>
+</soap:Envelope>`
+}
+
+func parseRoomLists(soap string) ([]models.RoomList, error) {
+	decoder := xml.NewDecoder(bytes.NewBufferString(soap))
+	var roomlists struct {
+		XMLName   xml.Name
+		Addresses []models.RoomList `xml:"Address"`
+	}
+	for {
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		switch se := t.(type) {
+		case xml.StartElement:
+			if se.Name.Local == "RoomLists" {
+				err := decoder.DecodeElement(&roomlists, &se)
+				if err != nil {
+					return nil, err
+				}
+				return roomlists.Addresses, nil
+			}
+		}
+	}
+	return nil, nil
+}
+
+// GetRoomsAvailabilityByTime for array of rooms return array of events, which consists of moments, when room is busy.
 func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.Room, error) {
 	t, err := template.New("roomsav").Parse(getRoomsAvailabilityRequest())
 	if err != nil {
@@ -38,7 +141,6 @@ func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time
 	if err != nil {
 		return nil, fmt.Errorf("[GetRoomsAvailabilityByTime] cannot parse: %v", err)
 	}
-
 	newRooms := make([]models.Room, 0)
 	for i, r := range rooms {
 		newroom := models.NewRoom(r.Name, r.EmailAddress)
@@ -46,7 +148,6 @@ func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time
 		newRooms = append(newRooms, *newroom)
 	}
 	return newRooms, nil
-
 }
 
 func getRoomsAvailabilityRequest() string {
