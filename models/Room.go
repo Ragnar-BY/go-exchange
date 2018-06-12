@@ -9,9 +9,12 @@ type Room struct {
 	CalendarEvents *CalendarEventArray
 }
 
+// NewRoom returns new Room.
 func NewRoom(name string, email string) *Room {
 	return &Room{Name: name, EmailAddress: email}
 }
+
+// SetCalendarEvents set events.
 func (r *Room) SetCalendarEvents(events *CalendarEventArray) {
 	r.CalendarEvents = events
 }
