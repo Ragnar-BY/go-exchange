@@ -1,19 +1,19 @@
 package models
 
-import (
-	"encoding/xml"
-)
+import "encoding/xml"
 
 // Room represents room.
 type Room struct {
-	Name         string
-	EmailAddress string
+	Name           string
+	EmailAddress   string
+	CalendarEvents *CalendarEventArray
 }
 
-// RoomList represents roomlist.
-type RoomList struct {
-	Name         string `xml:",Name"`
-	EmailAddress string `xml:",EmailAddress"`
+func NewRoom(name string, email string) *Room {
+	return &Room{Name: name, EmailAddress: email}
+}
+func (r *Room) SetCalendarEvents(events *CalendarEventArray) {
+	r.CalendarEvents = events
 }
 
 // UnmarshalXML unmarshals xml from exchange to Room.
@@ -31,4 +31,10 @@ func (r *Room) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	}
 	*r = Room{Name: exroom.ID.Name, EmailAddress: exroom.ID.EmailAddress}
 	return nil
+}
+
+// RoomList represents roomlist.
+type RoomList struct {
+	Name         string `xml:",Name"`
+	EmailAddress string `xml:",EmailAddress"`
 }

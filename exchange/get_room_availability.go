@@ -11,7 +11,7 @@ import (
 )
 
 // GetRoomsAvailabilityByTime  for array of rooms return array of events array, which consists of moments, when room is busy
-func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.CalendarEventArray, error) {
+func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.Room, error) {
 	t, err := template.New("roomsav").Parse(getRoomsAvailabilityRequest())
 	if err != nil {
 		return nil, fmt.Errorf("[GetRoomsAvailability] cannot create template %v", err)
@@ -28,13 +28,24 @@ func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time
 	var buf bytes.Buffer
 	err = t.Execute(&buf, data)
 	if err != nil {
-		return nil, fmt.Errorf("[GetRoomsAvailabilityByTime] cannot parse template %v", err)
+		return nil, fmt.Errorf("[GetRoomsAvailabilityByTime] cannot parse template: %v", err)
 	}
 	content, err := e.Post(buf.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("[GetRoomsAvailabilityByTime] cannot post %v", err)
+		return nil, fmt.Errorf("[GetRoomsAvailabilityByTime] cannot post: %v", err)
 	}
-	return parseRoomAvailability(content)
+	eventarrays, err := parseRoomAvailability(content)
+	if err != nil {
+		return nil, fmt.Errorf("[GetRoomsAvailabilityByTime] cannot parse: %v", err)
+	}
+
+	newRooms := make([]models.Room, 0)
+	for i, r := range rooms {
+		newroom := models.NewRoom(r.Name, r.EmailAddress)
+		newroom.SetCalendarEvents(&eventarrays[i])
+		newRooms = append(newRooms, *newroom)
+	}
+	return newRooms, nil
 
 }
 
