@@ -11,3 +11,11 @@ type CalendarEvent struct {
 type CalendarEventArray struct {
 	CalendarEvent []CalendarEvent `xml:"CalendarEvent"`
 }
+
+// CalendarItem represents an Exchange calendar item.
+type CalendarItem struct {
+	ItemId struct {
+		Id        string `xml:"Id,attr"`
+		ChangeKey string `xml:"ChangeKey,attr"`
+	} `xml:"ItemId"`
+}

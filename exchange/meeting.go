@@ -13,7 +13,7 @@ import (
 
 // AddMeeting create meeting in room with required attendees with subject from start to end time.
 // There is no error if room or attendee is busy.
-func (e Exchange2006) AddMeeting(room models.Room, attendees []string, start time.Time, end time.Time, subject string) error {
+func (e Exchange2006) AddMeeting(room models.Room, attendees []string, start time.Time, end time.Time, subject string) (*models.CalendarItem, error) {
 	data := struct {
 		Room      models.Room
 		Attendees []string
@@ -29,19 +29,19 @@ func (e Exchange2006) AddMeeting(room models.Room, attendees []string, start tim
 	}
 	t, err := template.New("meetings").Parse(addMeetingRequest())
 	if err != nil {
-		return fmt.Errorf("[AddMeeting] cannot create template %v", err)
+		return nil, fmt.Errorf("[AddMeeting] cannot create template %v", err)
 	}
 	var buf bytes.Buffer
 	err = t.Execute(&buf, data)
 	if err != nil {
-		return fmt.Errorf("[AddMeeting] cannot parse template: %v", err)
+		return nil, fmt.Errorf("[AddMeeting] cannot parse template: %v", err)
 	}
 	response, err := e.Post(buf.Bytes())
 	if err != nil {
-		return fmt.Errorf("[AddMeeting] cannot post %v", err)
+		return nil, fmt.Errorf("[AddMeeting] cannot post %v", err)
 	}
-	err = parseAddMeetingResponse(response)
-	return err
+	item, err := parseAddMeetingResponse(response)
+	return item, err
 }
 func addMeetingRequest() string {
 	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
@@ -82,11 +82,15 @@ func addMeetingRequest() string {
 </soap:Envelope>`
 }
 
-func parseAddMeetingResponse(response string) error {
+func parseAddMeetingResponse(response string) (*models.CalendarItem, error) {
+
 	type CreateItemResponseMessage struct {
 		ResponseClass string `xml:"ResponseClass,attr"`
 		ResponseCode  string `xml:"ResponseCode"`
 		MessageText   string `xml:"MessageText"`
+		Items         struct {
+			CalendarItem models.CalendarItem `xml:"CalendarItem"`
+		} `xml:"Items"`
 	}
 	var cirm CreateItemResponseMessage
 	decoder := xml.NewDecoder(bytes.NewBufferString(response))
@@ -100,14 +104,14 @@ func parseAddMeetingResponse(response string) error {
 			if se.Name.Local == "CreateItemResponseMessage" {
 				err := decoder.DecodeElement(&cirm, &se)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				if cirm.ResponseClass == "Error" {
-					return errors.New(cirm.MessageText)
+					return nil, errors.New(cirm.MessageText)
 				}
-				return nil
+				return &cirm.Items.CalendarItem, nil
 			}
 		}
 	}
-	return errors.New("cannot find CreateItemResponseMessage in response")
+	return nil, errors.New("cannot find CreateItemResponseMessage in response")
 }
