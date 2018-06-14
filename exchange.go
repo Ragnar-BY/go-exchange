@@ -13,4 +13,5 @@ type Exchange interface {
 	GetRoomsAvailabilityByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.CalendarEventArray, error)
 	GetFreeRoomsByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.Room, error)
 	AddMeeting(room models.Room, attendees []string, start time.Time, end time.Time, subject string) (*models.CalendarItem, error)
+	DeleteMeeting(item models.CalendarItem) error
 }

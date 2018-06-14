@@ -115,3 +115,72 @@ func parseAddMeetingResponse(response string) (*models.CalendarItem, error) {
 	}
 	return nil, errors.New("cannot find CreateItemResponseMessage in response")
 }
+
+// DeleteMeeting deletes meeting.
+func (e Exchange2006) DeleteMeeting(item models.CalendarItem) error {
+	t, err := template.New("meetingsDelete").Parse(deleteMeetingRequest())
+	if err != nil {
+		return fmt.Errorf("[DeleteMeeting] cannot create template %v", err)
+	}
+	var buf bytes.Buffer
+	err = t.Execute(&buf, item.ItemID)
+	if err != nil {
+		return fmt.Errorf("[DeleteMeeting] cannot parse template: %v", err)
+	}
+	response, err := e.Post(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("[DeleteMeeting] cannot post %v", err)
+	}
+	return parseDeleteMeetingResponse(response)
+}
+
+func deleteMeetingRequest() string {
+	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+       xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2007_SP1" />
+    <t:TimeZoneContext>
+      <t:TimeZoneDefinition Id="Belarus Standard Time" />
+    </t:TimeZoneContext>
+  </soap:Header>
+  <soap:Body>
+    <m:DeleteItem DeleteType="MoveToDeletedItems" SendMeetingCancellations="SendToAllAndSaveCopy">
+      <m:ItemIds>
+        <t:ItemId Id="{{.ID}}" ChangeKey="{{.ChangeKey}}" />
+      </m:ItemIds>
+    </m:DeleteItem>
+  </soap:Body>
+</soap:Envelope>
+`
+}
+
+func parseDeleteMeetingResponse(response string) error {
+
+	type DeleteItemResponseMessage struct {
+		ResponseClass string `xml:"ResponseClass,attr"`
+		ResponseCode  string `xml:"ResponseCode"`
+		MessageText   string `xml:"MessageText"`
+	}
+	var dirm DeleteItemResponseMessage
+	decoder := xml.NewDecoder(bytes.NewBufferString(response))
+	for {
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		switch se := t.(type) {
+		case xml.StartElement:
+			if se.Name.Local == "DeleteItemResponseMessage" {
+				err := decoder.DecodeElement(&dirm, &se)
+				if err != nil {
+					return err
+				}
+				if dirm.ResponseClass == "Error" {
+					return errors.New(dirm.MessageText)
+				}
+				return nil
+			}
+		}
+	}
+	return errors.New("cannot find DeleteItemResponseMessage in response")
+}
