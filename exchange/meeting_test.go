@@ -8,7 +8,7 @@ import (
 
 func Test_parseAddMeetingResponse(t *testing.T) {
 
-	ItemId := "SomeItemId"
+	ItemID := "SomeItemId"
 	ChangeKey := "SomeChangeKey"
 	tests := []struct {
 		name     string
@@ -29,7 +29,7 @@ func Test_parseAddMeetingResponse(t *testing.T) {
 				<m:ResponseCode>NoError</m:ResponseCode>
 				<m:Items>
 				<t:CalendarItem>
-				<t:ItemId Id="` + ItemId + `" ChangeKey="` + ChangeKey + `" />
+				<t:ItemId Id="` + ItemID + `" ChangeKey="` + ChangeKey + `" />
 				</t:CalendarItem>
 				</m:Items>
 				</m:CreateItemResponseMessage>
@@ -37,10 +37,10 @@ func Test_parseAddMeetingResponse(t *testing.T) {
 				</m:CreateItemResponse>
 				</s:Body>
 				</s:Envelope>"`,
-			want: &models.CalendarItem{ItemId: struct {
-				Id        string `xml:"Id,attr"`
+			want: &models.CalendarItem{ItemID: struct {
+				ID        string `xml:"Id,attr"`
 				ChangeKey string `xml:"ChangeKey,attr"`
-			}{Id: ItemId, ChangeKey: ChangeKey}},
+			}{ID: ItemID, ChangeKey: ChangeKey}},
 			wantErr: false,
 		},
 		{
@@ -102,7 +102,7 @@ func Test_parseAddMeetingResponse(t *testing.T) {
 				return
 			}
 			if err == nil {
-				if tt.want.ItemId.Id != got.ItemId.Id || tt.want.ItemId.ChangeKey != got.ItemId.ChangeKey {
+				if tt.want.ItemID.ID != got.ItemID.ID || tt.want.ItemID.ChangeKey != got.ItemID.ChangeKey {
 					t.Errorf("parseAddMeetingResponse() got %+v, want %+v", got, tt.want)
 				}
 			}
