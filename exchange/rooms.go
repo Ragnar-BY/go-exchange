@@ -69,15 +69,14 @@ func parseRooms(soap string) ([]models.Room, error) {
 
 // GetRoomLists make request to exchange and return roomlists.
 func (e Exchange2006) GetRoomLists() ([]models.RoomList, error) {
-	content, err := e.Post([]byte(roomListRequest()))
+	content, err := e.Post([]byte(roomListRequest))
 	if err != nil {
 		return nil, fmt.Errorf("[GetRoomLists] cannot post: %v", err)
 	}
 	return parseRoomLists(content)
 }
 
-func roomListRequest() string {
-	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+var roomListRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
                xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header>
     <t:RequestServerVersion Version="Exchange2010" />
@@ -86,7 +85,6 @@ func roomListRequest() string {
     <m:GetRoomLists />
   </soap:Body>
 </soap:Envelope>`
-}
 
 func parseRoomLists(soap string) ([]models.RoomList, error) {
 	decoder := xml.NewDecoder(bytes.NewBufferString(soap))
@@ -115,7 +113,7 @@ func parseRoomLists(soap string) ([]models.RoomList, error) {
 
 // GetRoomsAvailabilityByTime for array of rooms return array of events, which consists of moments, when room is busy.
 func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.Room, error) {
-	t, err := template.New("roomsav").Parse(getRoomsAvailabilityRequest())
+	t, err := template.New("roomsav").Parse(getRoomsAvailabilityRequest)
 	if err != nil {
 		return nil, fmt.Errorf("[GetRoomsAvailability] cannot create template %v", err)
 	}
@@ -150,8 +148,7 @@ func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time
 	return newRooms, nil
 }
 
-func getRoomsAvailabilityRequest() string {
-	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+var getRoomsAvailabilityRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
 xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
 xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -184,7 +181,6 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 	</m:GetUserAvailabilityRequest>
 	</soap:Body>
 	</soap:Envelope>`
-}
 
 func parseRoomAvailability(soap string) ([]models.CalendarEventArray, error) {
 	decoder := xml.NewDecoder(bytes.NewBufferString(soap))

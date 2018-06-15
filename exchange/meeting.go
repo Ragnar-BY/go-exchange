@@ -27,7 +27,7 @@ func (e Exchange2006) AddMeeting(room models.Room, attendees []string, start tim
 		End:       end.Format("2006-01-02T15:04:05"),
 		Subject:   subject,
 	}
-	t, err := template.New("meetings").Parse(addMeetingRequest())
+	t, err := template.New("meetings").Parse(addMeetingRequest)
 	if err != nil {
 		return nil, fmt.Errorf("[AddMeeting] cannot create template %v", err)
 	}
@@ -43,8 +43,8 @@ func (e Exchange2006) AddMeeting(room models.Room, attendees []string, start tim
 	item, err := parseAddMeetingResponse(response)
 	return item, err
 }
-func addMeetingRequest() string {
-	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+
+var addMeetingRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
        xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header>
     <t:RequestServerVersion Version="Exchange2007_SP1" />
@@ -80,7 +80,6 @@ func addMeetingRequest() string {
     </m:CreateItem>
   </soap:Body>
 </soap:Envelope>`
-}
 
 func parseAddMeetingResponse(response string) (*models.CalendarItem, error) {
 
@@ -118,7 +117,7 @@ func parseAddMeetingResponse(response string) (*models.CalendarItem, error) {
 
 // DeleteMeeting deletes meeting.
 func (e Exchange2006) DeleteMeeting(item models.CalendarItem) error {
-	t, err := template.New("meetingsDelete").Parse(deleteMeetingRequest())
+	t, err := template.New("meetingsDelete").Parse(deleteMeetingRequest)
 	if err != nil {
 		return fmt.Errorf("[DeleteMeeting] cannot create template %v", err)
 	}
@@ -134,8 +133,7 @@ func (e Exchange2006) DeleteMeeting(item models.CalendarItem) error {
 	return parseDeleteMeetingResponse(response)
 }
 
-func deleteMeetingRequest() string {
-	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+var deleteMeetingRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
        xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header>
     <t:RequestServerVersion Version="Exchange2007_SP1" />
@@ -152,7 +150,6 @@ func deleteMeetingRequest() string {
   </soap:Body>
 </soap:Envelope>
 `
-}
 
 func parseDeleteMeetingResponse(response string) error {
 
