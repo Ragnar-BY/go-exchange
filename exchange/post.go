@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/Azure/go-ntlmssp"
 )
 
 //Post make post request with contents.
@@ -21,12 +19,7 @@ func (e *Exchange2006) Post(contents []byte) (string, error) {
 	req.Header.Set("Content-Type", "text/xml")
 	req.SetBasicAuth(e.User, e.Password)
 
-	client := &http.Client{
-		Transport: ntlmssp.Negotiator{
-			RoundTripper: &http.Transport{},
-		},
-	}
-	response, err := client.Do(req)
+	response, err := e.client.Do(req)
 	if err != nil {
 		return "", err
 	}
