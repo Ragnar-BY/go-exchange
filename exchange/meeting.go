@@ -44,7 +44,8 @@ func (e Exchange2006) AddMeeting(room models.Room, attendees []string, start tim
 	return item, err
 }
 
-var addMeetingRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+var addMeetingRequest = `
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
        xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header>
     <t:RequestServerVersion Version="Exchange2007_SP1" />
@@ -79,7 +80,8 @@ var addMeetingRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSch
       </m:Items>
     </m:CreateItem>
   </soap:Body>
-</soap:Envelope>`
+</soap:Envelope>
+`
 
 func parseAddMeetingResponse(response string) (*models.CalendarItem, error) {
 
@@ -133,7 +135,8 @@ func (e Exchange2006) DeleteMeeting(item models.CalendarItem) error {
 	return parseDeleteMeetingResponse(response)
 }
 
-var deleteMeetingRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+var deleteMeetingRequest = `
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
        xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header>
     <t:RequestServerVersion Version="Exchange2007_SP1" />

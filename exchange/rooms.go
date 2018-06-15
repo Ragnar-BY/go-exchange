@@ -12,7 +12,7 @@ import (
 
 // GetRooms return rooms from roomlist as email.
 func (e Exchange2006) GetRooms(roomlist string) ([]models.Room, error) {
-	t, err := template.New("rooms").Parse(getRoomsRequest())
+	t, err := template.New("rooms").Parse(getRoomsRequest)
 	if err != nil {
 		return nil, fmt.Errorf("[GetRooms] cannot parse template %v", err)
 	}
@@ -25,23 +25,20 @@ func (e Exchange2006) GetRooms(roomlist string) ([]models.Room, error) {
 	return parseRooms(content)
 }
 
-func getRoomsRequest() string {
-	return `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
-xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
-xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-<soap:Header>
-	<t:RequestServerVersion Version="Exchange2010" />
-	</soap:Header>
-	<soap:Body>
-	<m:GetRooms>
-	<m:RoomList>
-	<t:EmailAddress>{{.}}</t:EmailAddress>
-	</m:RoomList>
-	</m:GetRooms>
-	</soap:Body>
-	</soap:Envelope>`
-}
+var getRoomsRequest = `
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <soap:Header>
+      <t:RequestServerVersion Version="Exchange2010" />
+   </soap:Header>
+   <soap:Body>
+      <m:GetRooms>
+         <m:RoomList>
+            <t:EmailAddress>{{.}}</t:EmailAddress>
+         </m:RoomList>
+      </m:GetRooms>
+   </soap:Body>
+</soap:Envelope>
+`
 
 func parseRooms(soap string) ([]models.Room, error) {
 	decoder := xml.NewDecoder(bytes.NewBufferString(soap))
@@ -76,15 +73,16 @@ func (e Exchange2006) GetRoomLists() ([]models.RoomList, error) {
 	return parseRoomLists(content)
 }
 
-var roomListRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
-               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Header>
-    <t:RequestServerVersion Version="Exchange2010" />
-  </soap:Header>
-  <soap:Body>
-    <m:GetRoomLists />
-  </soap:Body>
-</soap:Envelope>`
+var roomListRequest = `
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <soap:Header>
+      <t:RequestServerVersion Version="Exchange2010" />
+   </soap:Header>
+   <soap:Body>
+      <m:GetRoomLists />
+   </soap:Body>
+</soap:Envelope>
+`
 
 func parseRoomLists(soap string) ([]models.RoomList, error) {
 	decoder := xml.NewDecoder(bytes.NewBufferString(soap))
@@ -148,39 +146,36 @@ func (e Exchange2006) GetRoomsAvailabilityByTime(rooms []models.Room, start time
 	return newRooms, nil
 }
 
-var getRoomsAvailabilityRequest = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
-xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
-xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-<soap:Header>
-	<t:RequestServerVersion Version="Exchange2010" />
-	<t:TimeZoneContext>
-	<t:TimeZoneDefinition Id="Belarus Standard Time">
-	</t:TimeZoneDefinition>
-	</t:TimeZoneContext>
-	</soap:Header>
-	<soap:Body>
-	<m:GetUserAvailabilityRequest>
-	<m:MailboxDataArray>{{range .Rooms}}	
-	<t:MailboxData>
-	<t:Email>
-	<t:Address>{{.EmailAddress}}</t:Address>
-	</t:Email>
-	<t:AttendeeType>Room</t:AttendeeType>
-	<t:ExcludeConflicts>false</t:ExcludeConflicts>
-	</t:MailboxData>{{end}}	
-	</m:MailboxDataArray>
-	<t:FreeBusyViewOptions>
-	<t:TimeWindow>
-	<t:StartTime>{{.Start}}</t:StartTime>
-	<t:EndTime>{{.End}}</t:EndTime>
-	</t:TimeWindow>
-	<t:MergedFreeBusyIntervalInMinutes>30</t:MergedFreeBusyIntervalInMinutes>
-	<t:RequestedView>FreeBusy</t:RequestedView>
-	</t:FreeBusyViewOptions>
-	</m:GetUserAvailabilityRequest>
-	</soap:Body>
-	</soap:Envelope>`
+var getRoomsAvailabilityRequest = `
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <soap:Header>
+      <t:RequestServerVersion Version="Exchange2010" />
+      <t:TimeZoneContext>
+         <t:TimeZoneDefinition Id="Belarus Standard Time" />
+      </t:TimeZoneContext>
+   </soap:Header>
+   <soap:Body>
+      <m:GetUserAvailabilityRequest>
+         <m:MailboxDataArray>{{range .Rooms}}
+            <t:MailboxData>
+               <t:Email>
+                  <t:Address>{{.EmailAddress}}</t:Address>
+               </t:Email>
+               <t:AttendeeType>Room</t:AttendeeType>
+               <t:ExcludeConflicts>false</t:ExcludeConflicts>
+            </t:MailboxData>{{end}}
+         </m:MailboxDataArray>
+         <t:FreeBusyViewOptions>
+            <t:TimeWindow>
+               <t:StartTime>{{.Start}}</t:StartTime>
+               <t:EndTime>{{.End}}</t:EndTime>
+            </t:TimeWindow>
+            <t:MergedFreeBusyIntervalInMinutes>30</t:MergedFreeBusyIntervalInMinutes>
+            <t:RequestedView>FreeBusy</t:RequestedView>
+         </t:FreeBusyViewOptions>
+      </m:GetUserAvailabilityRequest>
+   </soap:Body>
+</soap:Envelope>`
 
 func parseRoomAvailability(soap string) ([]models.CalendarEventArray, error) {
 	decoder := xml.NewDecoder(bytes.NewBufferString(soap))
