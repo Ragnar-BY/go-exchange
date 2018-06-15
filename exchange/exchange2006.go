@@ -6,7 +6,7 @@ import (
 	"github.com/Azure/go-ntlmssp"
 )
 
-//Exchange2006 is main struct for requests.
+// Exchange2006 is main struct for requests.
 type Exchange2006 struct {
 	User     string
 	Password string
@@ -14,11 +14,12 @@ type Exchange2006 struct {
 	client   *http.Client
 }
 
-func NewExchange(user string, password string, url string) Exchange2006 {
+// NewExchange return new Istance of Exchange.
+func NewExchange(user string, password string, url string) *Exchange2006 {
 	client := &http.Client{
 		Transport: ntlmssp.Negotiator{
 			RoundTripper: &http.Transport{},
 		},
 	}
-	return Exchange2006{User: user, Password: password, URL: url, client: client}
+	return &Exchange2006{User: user, Password: password, URL: url, client: client}
 }
