@@ -14,4 +14,6 @@ type Exchange interface {
 	GetFreeRoomsByTime(rooms []models.Room, start time.Time, end time.Time) ([]models.Room, error)
 	AddMeeting(room models.Room, attendees []string, start time.Time, end time.Time, subject string) (*models.CalendarItem, error)
 	DeleteMeeting(item models.CalendarItem) error
+	GetMailBox(resolveName string) (*models.Mailbox, error)
+	FindInContactList(resolveName string) error
 }
